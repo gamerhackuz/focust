@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pomodoro Taymer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #1e1e24;
+            color: white;
+        }
+        .container {
+            text-align: center;
+            padding: 30px;
+        }
+        h2 { margin-bottom: 25px; font-weight: 300; letter-spacing: 2px; }
+        .timer-ring {
+            position: relative;
+            width: 220px;
+            height: 220px;
+            margin: 0 auto 30px;
+        }
+        .timer-ring svg { transform: rotate(-90deg); }
+        .ring-bg { fill: none; stroke: #333; stroke-width: 8; }
+        .ring-progress { fill: none; stroke: #ff6b6b; stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+        .time-display {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            font-weight: bold;
+        }
+        .status { font-size: 16px; color: #aaa; margin-bottom: 20px; min-height: 24px; }
+        .buttons { display: flex; gap: 12px; justify-content: center; }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.2s;
+            background: #2d2d35;
+            color: white;
+        }
+        .btn:hover { background: #3d3d45; }
+        .btn.primary { background: #ff6b6b; }
+        .btn.primary:hover { background: #ff8787; }
+        .mode-selector { margin-top: 20px; display: flex; gap: 10px; justify-content: center; }
+        .mode-btn {
+            padding: 6px 12px;
+            background: transparent;
+            border: 1px solid #555;
+            color: #aaa;
+            border-radius: 15px;
+            cursor: pointer;
+        }
+        .mode-btn.active { border-color: #ff6b6b; color: #ff6b6b; background: rgba(255,107,107,0.1); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🍅 POMODORO</h2>
+        <div class="timer-ring">
+            <svg width="220" height="220">
+                <circle class="ring-bg" cx="110" cy="110" r="100"></circle>
+                <circle class="ring-progress" id="progress" cx="110" cy="110" r="100" stroke-dasharray="628" stroke-dashoffset="0"></circle>
+            </svg>
+            <div class="time-display" id="time">25:00</div>
+        </div>
+        <div class="status" id="status">Ishlashga tayyor</div>
+        <div class="buttons">
+            <button class="btn primary" onclick="toggleTimer()" id="toggleBtn">▶ Boshlash</button>
+            <button class="btn" onclick="resetTimer()">↺ Qayta</button>
+        </div>
+        <div class="mode-selector">
+            <button class="mode-btn active" onclick="setMode('work')">Ish (25m)</button>
+            <button class="mode-btn" onclick="setMode('short')">Qisqa tanaffus (5m)</button>
+            <button class="mode-btn" onclick="setMode('long')">Uzun tanaffus (15m)</button>
+        </div>
+    </div>
+
+    <script>
+        let timeLeft = 25 * 60, totalTime = 25 * 60, timer = null, isRunning = false;
+        const circle = document.getElementById('progress');
+        const circumference = 2 * Math.PI * 100;
+
+        function updateDisplay() {
+            const m = String(Math.floor(timeLeft / 60)).padStart(2, '0');
+            const s = String(timeLeft % 60).padStart(2, '0');
+            document.getElementById('time').textContent = `${m}:${s}`;
+            document.title = `${m}:${s} - Pomodoro`;
+            
+            const offset = circumference - (timeLeft / totalTime) * circumference;
+            circle.style.strokeDashoffset = offset;
+        }
+
+        function toggleTimer() {
+            if (isRunning) {
+                clearInterval(timer);
+                document.getElementById('toggleBtn').textContent = '▶ Davom';
+                document.getElementById('status').textContent = "To'xtatildi";
+            } else {
+                timer = setInterval(() => {
+                    if (timeLeft > 0) {
+                        timeLeft--;
+                        updateDisplay();
+                    } else {
+                        clearInterval(timer);
+                        isRunning = false;
+                        document.getElementById('toggleBtn').textContent = '▶ Boshlash';
+                        document.getElementById('status').textContent = "✅ Vaqt tugadi! Tanaffus qiling.";
+                        new Audio("data:audio/wav;base64,UklGRl9vT19teXN0ZXJ5").play().catch(()=>{}); // placeholder beep
+                    }
+                }, 1000);
+                document.getElementById('toggleBtn').textContent = '⏸ To\'xtatish';
+                document.getElementById('status').textContent = "Ishlamoqda...";
+            }
+            isRunning = !isRunning;
+        }
+
+        function resetTimer() {
+            clearInterval(timer);
+            isRunning = false;
+            timeLeft = totalTime;
+            updateDisplay();
+            document.getElementById('toggleBtn').textContent = '▶ Boshlash';
+            document.getElementById('status').textContent = "Ishlashga tayyor";
+        }
+
+        function setMode(mode) {
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            if (mode === 'work') { totalTime = 25*60; document.getElementById('status').textContent = "Ishlash vaqti"; }
+            if (mode === 'short') { totalTime = 5*60; document.getElementById('status').textContent = "Qisqa tanaffus"; }
+            if (mode === 'long') { totalTime = 15*60; document.getElementById('status').textContent = "Uzun tanaffus"; }
+            resetTimer();
+        }
+
+        updateDisplay();
+    </script>
+</body>
+</html>
